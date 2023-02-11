@@ -135,6 +135,7 @@ my $PROXY_CONFIG  = {
   #                       1.レス番                        2.目欄           3.名前/ハッシュ                4.1.日付                       4.2.SE1                       4.3.ID     4.4 <0000>                               5.BE1           6.BE2          7.本文
   HTML2DAT_REGEX => '<dt>(\d+)\s[^<]*<(?:a href="mailto:([^"]+)"|font[^>]*)><b>(.*?)</b></(?:a|font)>.((?:[^<]+?)(?:\s*<a href="?http[^">]*"?[^>]*>[^<]*</a>)?(?:\s*(?:[^<]+?(?:(?:<\d+>)+[^<]*)?))?)?\s*(?:<a\s[^>]*be\(([^)]*)\)[^>]*>\?([^<]+)</a>)?<dd>([^\n]+)',
   HTML2DAT_REGEX2 => '<(?:div|span) class="number">(\d+)[^<]*</(?:div|span)><(?:div|span) class="name"><b>(?:<a href="mailto:([^"]+)">((?:(?!</a>).)*)</a>|(?:<font[^>]*>)?((?:(?!<\w+ class="date">).)*?)(?:</font>)?)</b></(?:div|span)><(?:div|span) class="date">((?:(?!(?:<div class="message">|<dd class="thread_in">)).)*?)</\w+>(?:<(?:div|span) class="be\s[^"]+"><a href="https?://be.\d+ch.net/user/(\d+)"[^>]*>\?([^>]+)</a>)?(?:|</div>|</span></div>)(?:<div class="message">|</dt><dd class="thread_in">)((?:(?!</(?:div|dd)>).)*)</(?:div|dd)>',
+  HTML2DAT_REGEX3 => '<span class="number">(\d+)[^<]*</span><span class="name"><b>(?:<a href="mailto:([^"]*)">((?:(?!<span class="date">).)*?)</a>|((?:(?!<span class="date">).)*?))?</b></span><span class="date">((?:(?!<div class="message">).)*?)(?:</span><span class="be\s[^"]+"><a href="https?://be.5ch.net/user/(\d+)"[^>]*>\?((?:(?!</a>).)*?)</a>)?</span></div><div class="message"><span class="escaped">((?:(?!</span></div>).)*?)</span></div>',
   #WEBスクレイピングの細かい部分の正規表現は下の方
 };
 
@@ -557,17 +558,33 @@ sub html2dat() {
 
   #タイトルの後に改行コードがあるかどうかで使用する正規表現を変更
   if (!$2) {
-    while ($html =~ m|$PROXY_CONFIG->{HTML2DAT_REGEX}|gs) {
-      $make_dat->(
-        title => $title,
-        res_number => int($1),
-        email => $2 // "",
-        name_hash => $3 // "",
-        date_se_id => $4 // "",
-        be1 => $5 // "",
-        be2 => $6 // "",
-        content => $7 // "",
-      );
+    if (index($html, '<span class="escaped">') == -1) {
+      while ($html =~ m|$PROXY_CONFIG->{HTML2DAT_REGEX}|gs) {
+        $make_dat->(
+          title => $title,
+          res_number => int($1),
+          email => $2 // "",
+          name_hash => $3 // "",
+          date_se_id => $4 // "",
+          be1 => $5 // "",
+          be2 => $6 // "",
+          content => $7 // "",
+        );
+      }
+    }
+    else{
+      while ($html =~ m|$PROXY_CONFIG->{HTML2DAT_REGEX3}|gs) {
+        $make_dat->(
+          title => $title,
+          res_number => ($1),
+          email => $2 // "",
+          name_hash => $3 // $4 // "",
+          date_se_id => $5 // "",
+          be1 => $6 // "",
+          be2 => $7 // "",
+          content => $8 // "",
+        );
+      }
     }
   }
   else{
