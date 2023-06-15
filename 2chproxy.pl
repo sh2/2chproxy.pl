@@ -1385,7 +1385,11 @@ sub scraping_2ch_request() {
     $is_gzip  = $6;
 
     $hash_key  = $domain.$category.$dat;
-    $rewrite_uri  = $uri->scheme()."://".$host.$domain."/test/read.cgi/".$category."/".$dat."/";
+    if ($domain =~ /bbspink/) {
+      $rewrite_uri  = $uri->scheme()."://".$host.$domain."/test/read.cgi/".$category."/".$dat."/";
+    } else {
+      $rewrite_uri  = $uri->scheme()."://".$host.$domain."/test/read.cgi/c/".$category."/".$dat."/";
+    }
   }
   else {
     my $response  = HTTP::Response->new(500, 'Invalid URL');
